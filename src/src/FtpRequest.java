@@ -30,19 +30,23 @@ public class FtpRequest extends Thread {
 	}
 
 	public void processRequest() throws IOException {
-		String request = this.input.readLine();
-		int ind = request.indexOf(" ");
 		String cmd;
-
-		if (ind != -1) {
-			cmd = request.substring(0, ind);
-		} else {
-			cmd = request;
-		}
-
-		String param = request.substring(ind + 1);
-
+		
 		do {
+			String request = this.input.readLine();
+			int space = request.indexOf(" ");
+
+			if (space != -1) {
+				cmd = request.substring(0, space);
+			} else {
+				cmd = request;
+			}
+
+			String param = request.substring(space + 1);
+
+			System.out.println("Request: " + request);
+			System.out.println("Cmd: " + cmd);
+
 			switch (cmd) {
 			case "USER":
 				processUSER(param);
@@ -67,14 +71,13 @@ public class FtpRequest extends Thread {
 			default:
 				break;
 			}
-		} while (cmd != "QUIT");
+		} while (!"QUIT".equals(cmd));
 
 		processQUIT();
 	}
 
 	protected void processUSER(final String user) throws IOException {
 		this.username = user;
-
 		this.output.println("331 En attente du mot de passe");
 		this.output.flush();
 	}

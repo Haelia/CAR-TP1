@@ -16,7 +16,7 @@ public class Serveur extends ServerSocket {
 			Socket socket = this.accept();
 
 			PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-			out.println("220 OK");
+			out.println("220 Connexion établie");
 			out.flush();
 
 			System.out.println("Connexion établie");
