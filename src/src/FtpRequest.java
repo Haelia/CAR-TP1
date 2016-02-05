@@ -2,106 +2,101 @@ package src;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.Scanner;
 
-public class FtpRequest implements Runnable {
+public class FtpRequest extends Thread {
 
 	private Socket socket;
+	private BufferedReader input;
+	private PrintWriter output;
+	private String username;
 
-	public FtpRequest(Socket socket) {
+	public FtpRequest(final Socket socket) throws IOException {
+		super();
 		this.socket = socket;
+		this.input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+		this.output = new PrintWriter(socket.getOutputStream(), true);
 	}
 
 	@Override
 	public void run() {
-		processRequest();
-	}
-
-	public void processRequest() {
 		try {
-			byte[] buffer = new byte[50];
-			String msg;
-			
-			System.out.println("processRequest");
-			
-			OutputStream os = socket.getOutputStream();
-			os.write(new String("220 OK").getBytes("UTF-8"));
-			os.flush();
-// tableau de byte, split espace et switch sur le premier élément / bufferedreader
-			do {
-				InputStream is = this.socket.getInputStream();
-				is.read(buffer);
-				
-				//BufferedReader reader = new BufferedReader();
-				
-				msg = new String(buffer, "UTF-8");
-				System.out.println(buffer);
-				System.out.println(msg);
-				
-				switch (msg) {
-				case "USER":
-					processUSER();
-					break;
-
-				case "PASS":
-					processPASS();
-					break;
-
-				case "RETR":
-					processRETR();
-					break;
-
-				case "STOR":
-					processSTOR();
-					break;
-
-				case "LIST":
-					processLIST();
-					break;
-
-				default:
-					break;
-				}
-			} while (msg != "QUIT");
-			
-			processQUIT();
-
+			processRequest();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
-	public boolean processUSER() {
-		System.out.println("processUSER");
-		return false;
+	public void processRequest() throws IOException {
+		String request = this.input.readLine();
+		int ind = request.indexOf(" ");
+		String cmd;
 
+		if (ind != -1) {
+			cmd = request.substring(0, ind);
+		} else {
+			cmd = request;
+		}
+
+		String param = request.substring(ind + 1);
+
+		do {
+			switch (cmd) {
+			case "USER":
+				processUSER(param);
+				break;
+
+			case "PASS":
+				processPASS(param);
+				break;
+
+			case "RETR":
+				processRETR(param);
+				break;
+
+			case "STOR":
+				processSTOR(param);
+				break;
+
+			case "LIST":
+				processLIST();
+				break;
+
+			default:
+				break;
+			}
+		} while (cmd != "QUIT");
+
+		processQUIT();
 	}
 
-	public boolean processPASS() {
+	protected void processUSER(final String user) throws IOException {
+		this.username = user;
+
+		this.output.println("331 En attente du mot de passe");
+		this.output.flush();
+	}
+
+	public boolean processPASS(String param) {
 		System.out.println("processPASS");
 		return false;
-
 	}
 
-	public boolean processRETR() {
+	public boolean processRETR(String param) {
 		System.out.println("processRETR");
 		return false;
-
 	}
 
-	public boolean processSTOR() {
+	public boolean processSTOR(String param) {
 		System.out.println("processSTOR");
 		return false;
-
 	}
 
 	public boolean processLIST() {
 		System.out.println("processLIST");
 		return false;
-
 	}
 
 	public String processQUIT() {
