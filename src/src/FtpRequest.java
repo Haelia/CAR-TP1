@@ -12,12 +12,16 @@ public class FtpRequest extends Thread {
 	private BufferedReader input;
 	private PrintWriter output;
 	private String username;
+	private boolean authentifie;
 
 	public FtpRequest(final Socket socket) throws IOException {
 		super();
 		this.socket = socket;
-		this.input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+		this.input = new BufferedReader(new InputStreamReader(
+				socket.getInputStream()));
 		this.output = new PrintWriter(socket.getOutputStream(), true);
+		this.username = "";
+		this.authentifie = false;
 	}
 
 	@Override
@@ -30,86 +34,107 @@ public class FtpRequest extends Thread {
 	}
 
 	public void processRequest() throws IOException {
-		String cmd;
-		
+		String[] cmd;
+
 		do {
 			String request = this.input.readLine();
-			int space = request.indexOf(" ");
-
-			if (space != -1) {
-				cmd = request.substring(0, space);
-			} else {
-				cmd = request;
-			}
-
-			String param = request.substring(space + 1);
+			cmd = request.split(" ");
 
 			System.out.println("Request: " + request);
-			System.out.println("Cmd: " + cmd);
 
-			switch (cmd) {
-			case "USER":
-				processUSER(param);
+			switch (cmd[0]) {
+			case Constantes.CMD_USER:
+				processUSER(cmd[1]);
 				break;
 
-			case "PASS":
-				processPASS(param);
+			case Constantes.CMD_PASS:
+				processPASS(cmd[1]);
 				break;
 
-			case "RETR":
-				processRETR(param);
+			case Constantes.CMD_RETR:
+				processRETR(cmd[1]);
 				break;
 
-			case "STOR":
-				processSTOR(param);
+			case Constantes.CMD_STOR:
+				processSTOR(cmd[1]);
 				break;
 
-			case "LIST":
+			case Constantes.CMD_LIST:
 				processLIST();
 				break;
 
 			default:
 				break;
 			}
-		} while (!"QUIT".equals(cmd));
+		} while (!Constantes.CMD_QUIT.equals(cmd[0]));
 
 		processQUIT();
 	}
 
 	protected void processUSER(final String user) throws IOException {
-		this.username = user;
-		this.output.println("331 En attente du mot de passe");
-		this.output.flush();
+		if (Serveur.utilisateurs.containsKey(user)) {
+			this.username = user;
+			this.output.println(Constantes.CODE_ATTENTE_MDP + " "
+					+ Constantes.MSG_ATTENTE_MDP);
+			this.output.flush();
+		} else {
+			this.output.println(Constantes.CODE_AUTH_ECHOUE + " "
+					+ Constantes.MSG_AUTH_ECHOUE);
+			this.output.flush();
+		}
+
 	}
 
 	public boolean processPASS(String param) {
-		System.out.println("processPASS");
+		if (username == "") {
+			this.output.println(Constantes.CODE_AUTH_ECHOUE + " "
+					+ Constantes.MSG_SAISIR_IDENTIFIANT);
+			this.output.flush();
+		} else {
+			if (Serveur.utilisateurs.get(this.username).equals(param)) {
+				this.authentifie = true;
+				this.output.println(Constantes.CODE_AUTH_REUSSIE + " "
+						+ Constantes.MSG_AUTH_REUSSIE);
+				this.output.flush();
+			} else {
+				this.output.println(Constantes.CODE_AUTH_ECHOUE + " "
+						+ Constantes.MSG_AUTH_ECHOUE);
+				this.output.flush();
+			}
+		}
 		return false;
 	}
 
 	public boolean processRETR(String param) {
-		System.out.println("processRETR");
+		if (this.authentifie == false) {
+			this.output.println(Constantes.CODE_NON_AUTH + " "
+					+ Constantes.MSG_NON_AUTH);
+			this.output.flush();
+		}
 		return false;
 	}
 
 	public boolean processSTOR(String param) {
-		System.out.println("processSTOR");
+		if (this.authentifie == false) {
+			this.output.println(Constantes.CODE_NON_AUTH + " "
+					+ Constantes.MSG_NON_AUTH);
+			this.output.flush();
+		}
 		return false;
 	}
 
 	public boolean processLIST() {
-		System.out.println("processLIST");
+		if (this.authentifie == false) {
+			this.output.println(Constantes.CODE_NON_AUTH + " "
+					+ Constantes.MSG_NON_AUTH);
+			this.output.flush();
+		}
 		return false;
 	}
 
-	public String processQUIT() {
+	public String processQUIT() throws IOException {
 		System.out.println("processQUIT");
-		try {
-			this.socket.close();
-			return "QUIT";
-		} catch (IOException e) {
-			e.printStackTrace();
-			return "Erreur";
-		}
+		this.socket.close();
+		return Constantes.CMD_QUIT;
 	}
 }

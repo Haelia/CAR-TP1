@@ -4,11 +4,22 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Serveur extends ServerSocket {
 
+	public static final Map<String, String> utilisateurs = new HashMap<>();
+
 	public Serveur(int port) throws IOException {
 		super(port);
+	}
+
+	/**
+	 * Ajoute un nouvel utilisateur
+	 */
+	public static void ajouteUtilisateur(String utilisateur, String mdp) {
+		Serveur.utilisateurs.put(utilisateur, mdp);
 	}
 
 	public void start() throws IOException {
@@ -16,10 +27,11 @@ public class Serveur extends ServerSocket {
 			Socket socket = this.accept();
 
 			PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-			out.println("220 Connexion établie");
+			out.println(Constantes.CODE_CONNEXION_REUSSIE + " "
+					+ Constantes.MSG_CONNEXION_REUSSIE);
 			out.flush();
 
-			System.out.println("Connexion établie");
+			System.out.println(Constantes.MSG_CONNEXION_REUSSIE);
 
 			FtpRequest ftpRequest = new FtpRequest(socket);
 			ftpRequest.start();
@@ -28,6 +40,8 @@ public class Serveur extends ServerSocket {
 
 	public static void main(String[] args) {
 		try {
+			Serveur.ajouteUtilisateur("Kaendan", "test");
+			Serveur.ajouteUtilisateur("Haelia", "test");
 			Serveur server = new Serveur(1515);
 			server.start();
 			server.close();
