@@ -42,7 +42,7 @@ public class Serveur extends ServerSocket {
 		try {
 			Serveur.ajouteUtilisateur("Kaendan", "test");
 			Serveur.ajouteUtilisateur("Haelia", "test");
-			Serveur server = new Serveur(1515);
+			Serveur server = new Serveur(2000);
 			server.start();
 			server.close();
 		} catch (final Exception e) {
