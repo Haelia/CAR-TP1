@@ -137,4 +137,7 @@ public class FtpRequest extends Thread {
 		this.socket.close();
 		return Constantes.CMD_QUIT;
 	}
+	public boolean estAuthentifie(){
+		return this.authentifie;
+	}
 }
