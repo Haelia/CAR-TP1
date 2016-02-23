@@ -101,7 +101,7 @@ public class FtpRequest extends Thread {
 				case Constantes.CMD_EPSV:
 					processEPSV();
 					break;
-					
+
 				case Constantes.CMD_PWD:
 					processPWD();
 					break;
@@ -243,13 +243,15 @@ public class FtpRequest extends Thread {
 
 	public void processSTOR(final String filename) {
 		try {
+			this.output.println(Constantes.CODE_LIST);
+			this.output.flush();
 			InputStream in = this.socketData.getInputStream();
+
 			String path = this.repertoire.toPath().toAbsolutePath().toString() + "/" + filename;
-			Path target = new File(path).toPath();
+			Path target = Paths.get(path);
+
 			Files.copy(in, target, StandardCopyOption.REPLACE_EXISTING);
-			OutputStreamWriter outputWriterData = new OutputStreamWriter(socketData.getOutputStream());
-			outputWriterData.write(Constantes.CODE_TRANSFERT_REUSSI);
-			outputWriterData.flush();
+			
 			socketData.close();
 		} catch (IOException e) {
 			this.output.println(Constantes.CODE_TRANSFERT_ECHOUE + " " + Constantes.MSG_TRANSFERT_ECHOUE);
@@ -304,9 +306,9 @@ public class FtpRequest extends Thread {
 	}
 
 	private void processEPSV() throws IOException {
-		//ServerSocket server = new ServerSocket();
-		//this.socketData = server.accept();
-		//server.close();
+		// ServerSocket server = new ServerSocket();
+		// this.socketData = server.accept();
+		// server.close();
 		this.output.println(Constantes.CODE_SERVICE_OK);
 		this.output.flush();
 	}

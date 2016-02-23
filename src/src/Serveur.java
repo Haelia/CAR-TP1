@@ -43,7 +43,7 @@ public class Serveur extends ServerSocket {
 	public static void main(String[] args) {
 		try {
 			Serveur.ajouteUtilisateur("azerty", "azerty");
-			Serveur server = new Serveur(1515, System.getProperty("user.dir"));
+			Serveur server = new Serveur(1234, System.getProperty("user.dir"));
 			server.start();
 			server.close();
 		} catch (final Exception e) {
