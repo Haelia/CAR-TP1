@@ -10,9 +10,11 @@ import java.util.Map;
 public class Serveur extends ServerSocket {
 
 	public static final Map<String, String> utilisateurs = new HashMap<>();
+	public String repertoire;
 
-	public Serveur(int port) throws IOException {
+	public Serveur(int port, String repertoire) throws IOException {
 		super(port);
+		this.repertoire = repertoire;
 	}
 
 	/**
@@ -33,7 +35,7 @@ public class Serveur extends ServerSocket {
 
 			System.out.println(Constantes.MSG_CONNEXION_REUSSIE);
 
-			FtpRequest ftpRequest = new FtpRequest(socket);
+			FtpRequest ftpRequest = new FtpRequest(socket, repertoire);
 			ftpRequest.start();
 		}
 	}
@@ -42,7 +44,8 @@ public class Serveur extends ServerSocket {
 		try {
 			Serveur.ajouteUtilisateur("Kaendan", "test");
 			Serveur.ajouteUtilisateur("Haelia", "test");
-			Serveur server = new Serveur(2000);
+			Serveur.ajouteUtilisateur("test", "test");
+			Serveur server = new Serveur(2000, System.getProperty("user.dir"));
 			server.start();
 			server.close();
 		} catch (final Exception e) {
