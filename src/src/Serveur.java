@@ -42,10 +42,8 @@ public class Serveur extends ServerSocket {
 
 	public static void main(String[] args) {
 		try {
-			Serveur.ajouteUtilisateur("Kaendan", "test");
-			Serveur.ajouteUtilisateur("Haelia", "test");
-			Serveur.ajouteUtilisateur("test", "test");
-			Serveur server = new Serveur(2000, System.getProperty("user.dir"));
+			Serveur.ajouteUtilisateur("azerty", "azerty");
+			Serveur server = new Serveur(1515, System.getProperty("user.dir"));
 			server.start();
 			server.close();
 		} catch (final Exception e) {

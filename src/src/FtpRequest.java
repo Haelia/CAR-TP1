@@ -9,7 +9,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.InetAddress;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
@@ -22,9 +21,9 @@ public class FtpRequest extends Thread {
 
 	private static String commandes[] = { Constantes.CMD_USER, Constantes.CMD_PASS, Constantes.CMD_QUIT,
 			Constantes.CMD_LIST, Constantes.CMD_RETR, Constantes.CMD_STOR, Constantes.CMD_SYST, Constantes.CMD_EPRT,
-			Constantes.CMD_EPSV, Constantes.CMD_PORT };
+			Constantes.CMD_EPSV, Constantes.CMD_PORT, Constantes.CMD_PWD };
 
-	private static int params[] = { 1, 1, 0, 0, 1, 1, 0, 1, 0, 1 };
+	private static int params[] = { 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0 };
 
 	private Socket socket;
 	private Socket socketData;
@@ -101,6 +100,10 @@ public class FtpRequest extends Thread {
 
 				case Constantes.CMD_EPSV:
 					processEPSV();
+					break;
+					
+				case Constantes.CMD_PWD:
+					processPWD();
 					break;
 
 				case Constantes.CMD_QUIT:
@@ -271,7 +274,7 @@ public class FtpRequest extends Thread {
 	}
 
 	public void processPWD() {
-		this.output.println(Constantes.CODE_FILEOP_COMPLETED + " " + this.repertoire.getAbsolutePath());
+		this.output.println(Constantes.CODE_257_PWD + " " + this.repertoire.getAbsolutePath());
 		this.output.flush();
 	}
 

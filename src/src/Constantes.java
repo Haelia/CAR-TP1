@@ -29,11 +29,12 @@ public class Constantes {
 	public static final int CODE_TRANSFERT_REUSSI = 226;
 	public static final int CODE_TRANSFERT_ECHOUE = 425;
 	public static final int CODE_SYST = 215;
-	public static final int CODE_FILEOP_COMPLETED = 250;
+	public static final int CODE_257_PWD = 257;
 	public static final int CODE_REQUEST_NO_EXECUTED = 530;
 	public static final int CODE_SERVICE_OK = 200;
 	public static final int CODE_LIST = 150;
 	public static final int CODE_226_LIST = 226;
+	public static final int CODE_FILEOP_COMPLETED = 250;
 
 	// Messages
 
