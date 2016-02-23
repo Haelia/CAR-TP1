@@ -3,25 +3,28 @@ package src;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 
 public class FtpRequest extends Thread {
 
 	private static String commandes[] = { Constantes.CMD_USER, Constantes.CMD_PASS, Constantes.CMD_QUIT,
-			Constantes.CMD_LIST, Constantes.CMD_RETR, Constantes.CMD_STOR, Constantes.CMD_SYST };
+			Constantes.CMD_LIST, Constantes.CMD_RETR, Constantes.CMD_STOR, Constantes.CMD_SYST, Constantes.CMD_EPRT,
+			Constantes.CMD_EPSV, Constantes.CMD_PORT };
 
-	private static int params[] = { 1, 1, 0, 0, 1, 1, 0 };
+	private static int params[] = { 1, 1, 0, 0, 1, 1, 0, 1, 0, 1 };
 
 	private Socket socket;
 	private Socket socketData;
@@ -30,6 +33,7 @@ public class FtpRequest extends Thread {
 	private String username;
 	private boolean authentifie;
 	private File repertoire;
+	private InetAddress adresse;
 
 	public FtpRequest(final Socket socket, String repertoire) throws IOException {
 		super();
@@ -39,6 +43,7 @@ public class FtpRequest extends Thread {
 		this.username = "";
 		this.authentifie = false;
 		this.repertoire = new File(repertoire);
+		this.adresse = socket.getInetAddress();
 	}
 
 	@Override
@@ -55,9 +60,10 @@ public class FtpRequest extends Thread {
 
 		do {
 			String request = this.input.readLine();
-			cmd = request.split(" ");
 
 			System.out.println("Request: " + request);
+
+			cmd = request.split(" ");
 
 			if (estValideCommande(cmd[0], cmd.length - 1)) {
 				switch (cmd[0]) {
@@ -83,6 +89,18 @@ public class FtpRequest extends Thread {
 
 				case Constantes.CMD_SYST:
 					processSYST();
+					break;
+
+				case Constantes.CMD_PORT:
+					processPORT(cmd[1]);
+					break;
+
+				case Constantes.CMD_EPRT:
+					processEPRT(cmd[1]);
+					break;
+
+				case Constantes.CMD_EPSV:
+					processEPSV();
 					break;
 
 				case Constantes.CMD_QUIT:
@@ -167,7 +185,7 @@ public class FtpRequest extends Thread {
 		return false;
 	}
 
-	public void processLIST() {
+	public void processLIST() throws IOException {
 		String liste = "";
 		File[] fichiers = repertoire.listFiles();
 
@@ -175,7 +193,16 @@ public class FtpRequest extends Thread {
 			liste += fichier.getName() + "\n";
 		}
 
-		this.output.println(liste);
+		this.output.println(Constantes.CODE_LIST);
+		this.output.flush();
+
+		OutputStreamWriter outputWriterData = new OutputStreamWriter(socketData.getOutputStream());
+		outputWriterData.write(liste);
+		outputWriterData.flush();
+
+		this.socketData.close();
+
+		this.output.println(Constantes.CODE_226_LIST);
 		this.output.flush();
 	}
 
@@ -213,19 +240,14 @@ public class FtpRequest extends Thread {
 
 	public void processSTOR(final String filename) {
 		try {
-			BufferedReader br = new BufferedReader(new InputStreamReader(socketData.getInputStream()));
-			String res = "", tmp;
-			while ((tmp = br.readLine()) != null) {
-				res += tmp + "\n";
-			}
-
+			InputStream in = this.socketData.getInputStream();
+			String path = this.repertoire.toPath().toAbsolutePath().toString() + "/" + filename;
+			Path target = new File(path).toPath();
+			Files.copy(in, target, StandardCopyOption.REPLACE_EXISTING);
+			OutputStreamWriter outputWriterData = new OutputStreamWriter(socketData.getOutputStream());
+			outputWriterData.write(Constantes.CODE_TRANSFERT_REUSSI);
+			outputWriterData.flush();
 			socketData.close();
-
-			File fichier = new File(this.repertoire.getPath() + "/" + filename);
-			fichier.createNewFile();
-			FileOutputStream output = new FileOutputStream(fichier);
-			output.write(res.getBytes());
-			output.close();
 		} catch (IOException e) {
 			this.output.println(Constantes.CODE_TRANSFERT_ECHOUE + " " + Constantes.MSG_TRANSFERT_ECHOUE);
 			this.output.flush();
@@ -239,25 +261,13 @@ public class FtpRequest extends Thread {
 		this.output.println(Constantes.CODE_SYST + " " + Constantes.MSG_SYST);
 		this.output.flush();
 	}
-	
-	public void processPORT(final String cmd) {
-		System.out.println("CMD PORT : " + cmd);
-		String[] tmpPort = cmd.split(",");
-		String tmp = "";
-		int port = Integer.parseInt(tmpPort[4]) * 256
-				+ Integer.parseInt(tmpPort[5]);
-		for (int i = 0; i < 4; i++)
-			tmp += tmpPort[i] + ".";
-		tmp = tmp.substring(0, tmp.length() - 1);
-		try {
-			socketData = new Socket(tmp, port);
-			this.output.println(Constantes.CODE_SERVICE_OK);
-			this.output.flush();
-		} catch (Exception e) {
-			this.output.println(Constantes.CODE_PARAM_INVALIDE);
-			this.output.flush();
-		}
 
+	private void processPORT(String adresse) throws IOException {
+		String[] s = adresse.split(",");
+		int port = Integer.parseInt(s[4]) * 256 + Integer.parseInt(s[5]);
+		this.socketData = new Socket(this.adresse, port);
+		this.output.println(Constantes.CODE_SERVICE_OK);
+		this.output.flush();
 	}
 
 	public void processPWD() {
@@ -280,5 +290,21 @@ public class FtpRequest extends Thread {
 
 	public void processCDUP() throws IOException {
 		processCWD("..");
+	}
+
+	public void processEPRT(String adresse) throws IOException {
+		final String[] s = adresse.split("[|]");
+		int port = Integer.parseInt(s[3]);
+		this.socketData = new Socket(this.adresse, port);
+		this.output.println(Constantes.CODE_SERVICE_OK);
+		this.output.flush();
+	}
+
+	private void processEPSV() throws IOException {
+		//ServerSocket server = new ServerSocket();
+		//this.socketData = server.accept();
+		//server.close();
+		this.output.println(Constantes.CODE_SERVICE_OK);
+		this.output.flush();
 	}
 }

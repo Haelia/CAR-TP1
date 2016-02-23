@@ -10,8 +10,11 @@ public class Constantes {
 	public static final String CMD_LIST = "LIST";
 	public static final String CMD_QUIT = "QUIT";
 	public static final String CMD_SYST = "SYST";
+	public static final String CMD_PORT = "PORT";
 	public static final String CMD_PWD = "PWD";
 	public static final String CMD_CWD = "CWD";
+	public static final String CMD_EPRT = "EPRT";
+	public static final String CMD_EPSV = "EPSV";
 
 	// Codes de retour
 	public static final int CODE_DECONNEXION = 221;
@@ -29,6 +32,8 @@ public class Constantes {
 	public static final int CODE_FILEOP_COMPLETED = 250;
 	public static final int CODE_REQUEST_NO_EXECUTED = 530;
 	public static final int CODE_SERVICE_OK = 200;
+	public static final int CODE_LIST = 150;
+	public static final int CODE_226_LIST = 226;
 
 	// Messages
 
