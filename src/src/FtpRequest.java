@@ -2,10 +2,10 @@ package src;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.InetAddress;
@@ -34,7 +34,7 @@ public class FtpRequest extends Thread {
 	private File repertoire;
 	private InetAddress adresse;
 
-	public FtpRequest(final Socket socket, String repertoire) throws IOException {
+	public FtpRequest(Socket socket, String repertoire) throws IOException {
 		super();
 		this.socket = socket;
 		this.input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -157,7 +157,7 @@ public class FtpRequest extends Thread {
 		return this.authentifie;
 	}
 
-	public void processUSER(final String user) throws IOException {
+	public void processUSER(String user) throws IOException {
 		this.authentifie = false;
 		if (Serveur.utilisateurs.containsKey(user)) {
 			this.username = user;
@@ -215,33 +215,28 @@ public class FtpRequest extends Thread {
 		this.socket.close();
 	}
 
-	public void processRETR(final String filename) throws IOException {
+	public void processRETR(String filename) {
 		try {
-			InputStream flux = new FileInputStream(this.repertoire.getPath() + "/" + filename);
-			InputStreamReader lecture = new InputStreamReader(flux);
-			BufferedReader buff = new BufferedReader(lecture);
-			String tmp = "", line;
-			while ((line = buff.readLine()) != null) {
-				tmp += line + "\n";
-			}
-			buff.close();
+			this.output.println(Constantes.CODE_LIST);
+			this.output.flush();
+			String path = this.repertoire.toPath().toAbsolutePath().toString() + "/" + filename;
+			Path target = Paths.get(path);
 
-			OutputStreamWriter outputWriterData = new OutputStreamWriter(socketData.getOutputStream());
-			outputWriterData.write(tmp);
-			outputWriterData.flush();
+			OutputStream out = this.socketData.getOutputStream();
+
+			Files.copy(target, out);
 
 			socketData.close();
-
-			this.output.println(Constantes.CODE_TRANSFERT_REUSSI + " " + Constantes.MSG_TRANSFERT_REUSSI);
-			this.output.flush();
 		} catch (Exception e) {
 			this.output.println(Constantes.CODE_TRANSFERT_ECHOUE + " " + Constantes.MSG_TRANSFERT_ECHOUE);
 			this.output.flush();
 		}
 
+		this.output.println(Constantes.CODE_TRANSFERT_REUSSI + " " + Constantes.MSG_TRANSFERT_REUSSI);
+		this.output.flush();
 	}
 
-	public void processSTOR(final String filename) {
+	public void processSTOR(String filename) {
 		try {
 			this.output.println(Constantes.CODE_LIST);
 			this.output.flush();
@@ -251,7 +246,7 @@ public class FtpRequest extends Thread {
 			Path target = Paths.get(path);
 
 			Files.copy(in, target, StandardCopyOption.REPLACE_EXISTING);
-			
+
 			socketData.close();
 		} catch (IOException e) {
 			this.output.println(Constantes.CODE_TRANSFERT_ECHOUE + " " + Constantes.MSG_TRANSFERT_ECHOUE);
@@ -280,7 +275,7 @@ public class FtpRequest extends Thread {
 		this.output.flush();
 	}
 
-	public void processCWD(final String chemin) throws IOException {
+	public void processCWD(String chemin) throws IOException {
 		Path tmpPath = Paths.get(this.repertoire.getPath() + "/" + chemin);
 
 		if (Files.exists(tmpPath, LinkOption.NOFOLLOW_LINKS)) {
@@ -298,7 +293,7 @@ public class FtpRequest extends Thread {
 	}
 
 	public void processEPRT(String adresse) throws IOException {
-		final String[] s = adresse.split("[|]");
+		String[] s = adresse.split("[|]");
 		int port = Integer.parseInt(s[3]);
 		this.socketData = new Socket(this.adresse, port);
 		this.output.println(Constantes.CODE_SERVICE_OK);
