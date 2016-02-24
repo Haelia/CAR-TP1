@@ -8,6 +8,7 @@ public class Constantes {
 	public static final String CMD_QUIT = "QUIT";
 	public static final String CMD_SYST = "SYST";
 	public static final String CMD_PORT = "PORT";
+	public static final String CMD_PASV = "PASV";
 	public static final String CMD_EPRT = "EPRT";
 	public static final String CMD_EPSV = "EPSV";
 	public static final String CMD_LIST = "LIST";
@@ -50,6 +51,6 @@ public class Constantes {
 	public static final String MSG_PARAM_INVALIDE = "Parametres invalides";
 	public static final String MSG_TRANSFERT_REUSSI = "Transfert reussi";
 	public static final String MSG_TRANSFERT_ECHOUE = "Transfert echoue";
-	public static final String MSG_SYST = "Serveur";
+	public static final String MSG_SYST = "Serveur FTP Java";
 	public static final String MSG_NO_SUCH_FOLDER = "Repertoire inexistant";
 }
