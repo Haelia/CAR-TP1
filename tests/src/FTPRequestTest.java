@@ -20,9 +20,9 @@ public class FTPRequestTest {
 	 */
 	@Test
 	public void testAuthentificationOK() throws IOException {
-		s = new Serveur(1515);
+		s = new Serveur(1515,System.getProperty("user.dir"));
 		Socket sock = new Socket("127.0.0.1", 1515);
-		FtpRequest ftp = new FtpRequest(sock);
+		FtpRequest ftp = new FtpRequest(sock,System.getProperty("user.dir"));
 		Serveur.ajouteUtilisateur("utilisateur", "mdp");
 		ftp.processUSER("utilisateur");
 		ftp.processPASS("mdp");
@@ -38,9 +38,9 @@ public class FTPRequestTest {
 	 */
 	@Test
 	public void testAuthentificationEchoue() throws IOException {
-		s = new Serveur(1516);
+		s = new Serveur(1516,System.getProperty("user.dir"));
 		Socket sock = new Socket("127.0.0.1", 1516);
-		FtpRequest ftp = new FtpRequest(sock);
+		FtpRequest ftp = new FtpRequest(sock,System.getProperty("user.dir"));
 		Serveur.ajouteUtilisateur("utilisateur", "mdp");
 		ftp.processUSER("utilisateur");
 		ftp.processPASS("mauvaisMdp");
@@ -55,9 +55,9 @@ public class FTPRequestTest {
 	 */
 	@Test
 	public void testProcessPassSansUser() throws IOException {
-		s = new Serveur(1517);
+		s = new Serveur(1517,System.getProperty("user.dir"));
 		Socket sock = new Socket("127.0.0.1", 1517);
-		FtpRequest ftp = new FtpRequest(sock);
+		FtpRequest ftp = new FtpRequest(sock,System.getProperty("user.dir"));
 		Serveur.ajouteUtilisateur("utilisateur", "mdp");
 		assertFalse(ftp.processPASS("mdp"));
 	}
