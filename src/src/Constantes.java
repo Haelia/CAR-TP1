@@ -5,16 +5,17 @@ public class Constantes {
 	// Commandes
 	public static final String CMD_USER = "USER";
 	public static final String CMD_PASS = "PASS";
-	public static final String CMD_RETR = "RETR";
-	public static final String CMD_STOR = "STOR";
-	public static final String CMD_LIST = "LIST";
 	public static final String CMD_QUIT = "QUIT";
 	public static final String CMD_SYST = "SYST";
 	public static final String CMD_PORT = "PORT";
-	public static final String CMD_PWD = "PWD";
-	public static final String CMD_CWD = "CWD";
 	public static final String CMD_EPRT = "EPRT";
 	public static final String CMD_EPSV = "EPSV";
+	public static final String CMD_LIST = "LIST";
+	public static final String CMD_RETR = "RETR";
+	public static final String CMD_STOR = "STOR";
+	public static final String CMD_PWD = "PWD";
+	public static final String CMD_CWD = "CWD";
+	public static final String CMD_CDUP = "CDUP";
 
 	// Codes de retour
 	public static final int CODE_DECONNEXION = 221;

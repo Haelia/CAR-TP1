@@ -21,9 +21,9 @@ public class FtpRequest extends Thread {
 
 	private static String commandes[] = { Constantes.CMD_USER, Constantes.CMD_PASS, Constantes.CMD_QUIT,
 			Constantes.CMD_LIST, Constantes.CMD_RETR, Constantes.CMD_STOR, Constantes.CMD_SYST, Constantes.CMD_EPRT,
-			Constantes.CMD_EPSV, Constantes.CMD_PORT, Constantes.CMD_PWD };
+			Constantes.CMD_EPSV, Constantes.CMD_PORT, Constantes.CMD_PWD, Constantes.CMD_CWD, Constantes.CMD_CDUP };
 
-	private static int params[] = { 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0 };
+	private static int params[] = { 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0 };
 
 	private Socket socket;
 	private Socket socketData;
@@ -55,10 +55,11 @@ public class FtpRequest extends Thread {
 	}
 
 	public void processRequest() throws IOException {
-		String[] cmd;
+		String request;
+		String[] cmd = null;
 
 		do {
-			String request = this.input.readLine();
+			request = this.input.readLine();
 
 			System.out.println("Request: " + request);
 
@@ -74,16 +75,8 @@ public class FtpRequest extends Thread {
 					processPASS(cmd[1]);
 					break;
 
-				case Constantes.CMD_LIST:
-					processLIST();
-					break;
-
-				case Constantes.CMD_RETR:
-					processRETR(cmd[1]);
-					break;
-
-				case Constantes.CMD_STOR:
-					processSTOR(cmd[1]);
+				case Constantes.CMD_QUIT:
+					processQUIT();
 					break;
 
 				case Constantes.CMD_SYST:
@@ -102,12 +95,28 @@ public class FtpRequest extends Thread {
 					processEPSV();
 					break;
 
+				case Constantes.CMD_LIST:
+					processLIST();
+					break;
+
+				case Constantes.CMD_RETR:
+					processRETR(cmd[1]);
+					break;
+
+				case Constantes.CMD_STOR:
+					processSTOR(cmd[1]);
+					break;
+
 				case Constantes.CMD_PWD:
 					processPWD();
 					break;
 
-				case Constantes.CMD_QUIT:
-					processQUIT();
+				case Constantes.CMD_CWD:
+					processCWD(cmd[1]);
+					break;
+
+				case Constantes.CMD_CDUP:
+					processCDUP();
 					break;
 				}
 			}
@@ -188,6 +197,43 @@ public class FtpRequest extends Thread {
 		return false;
 	}
 
+	public void processQUIT() throws IOException {
+		this.output.println(Constantes.CODE_DECONNEXION + " " + Constantes.MSG_DECONNEXION);
+		this.output.flush();
+		this.socket.close();
+	}
+
+	public void processSYST() throws IOException {
+		this.output.println(Constantes.CODE_SYST + " " + Constantes.MSG_SYST);
+		this.output.flush();
+	}
+
+	private void processPORT(String adresse) throws IOException {
+		String[] s = adresse.split(",");
+		int port = Integer.parseInt(s[4]) * 256 + Integer.parseInt(s[5]);
+
+		this.socketData = new Socket(this.adresse, port);
+		this.output.println(Constantes.CODE_SERVICE_OK);
+		this.output.flush();
+	}
+
+	public void processEPRT(String adresse) throws IOException {
+		String[] s = adresse.split("[|]");
+		int port = Integer.parseInt(s[3]);
+
+		this.socketData = new Socket(this.adresse, port);
+		this.output.println(Constantes.CODE_SERVICE_OK);
+		this.output.flush();
+	}
+
+	private void processEPSV() throws IOException {
+		// ServerSocket server = new ServerSocket();
+		// this.socketData = server.accept();
+		// server.close();
+		this.output.println(Constantes.CODE_SERVICE_OK);
+		this.output.flush();
+	}
+
 	public void processLIST() throws IOException {
 		String liste = "";
 		File[] fichiers = repertoire.listFiles();
@@ -207,12 +253,6 @@ public class FtpRequest extends Thread {
 
 		this.output.println(Constantes.CODE_226_LIST);
 		this.output.flush();
-	}
-
-	public void processQUIT() throws IOException {
-		this.output.println(Constantes.CODE_DECONNEXION + " " + Constantes.MSG_DECONNEXION);
-		this.output.flush();
-		this.socket.close();
 	}
 
 	public void processRETR(String filename) {
@@ -257,29 +297,16 @@ public class FtpRequest extends Thread {
 		this.output.flush();
 	}
 
-	public void processSYST() throws IOException {
-		this.output.println(Constantes.CODE_SYST + " " + Constantes.MSG_SYST);
-		this.output.flush();
-	}
-
-	private void processPORT(String adresse) throws IOException {
-		String[] s = adresse.split(",");
-		int port = Integer.parseInt(s[4]) * 256 + Integer.parseInt(s[5]);
-		this.socketData = new Socket(this.adresse, port);
-		this.output.println(Constantes.CODE_SERVICE_OK);
-		this.output.flush();
-	}
-
 	public void processPWD() {
 		this.output.println(Constantes.CODE_257_PWD + " " + this.repertoire.getAbsolutePath());
 		this.output.flush();
 	}
 
 	public void processCWD(String chemin) throws IOException {
-		Path tmpPath = Paths.get(this.repertoire.getPath() + "/" + chemin);
+		Path path = Paths.get(this.repertoire.getPath() + "/" + chemin);
 
-		if (Files.exists(tmpPath, LinkOption.NOFOLLOW_LINKS)) {
-			this.repertoire = new File(tmpPath.toString());
+		if (Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
+			this.repertoire = new File(path.toString());
 			this.output.println(Constantes.CODE_FILEOP_COMPLETED + " " + this.repertoire.getAbsolutePath());
 			this.output.flush();
 		} else {
@@ -289,22 +316,20 @@ public class FtpRequest extends Thread {
 	}
 
 	public void processCDUP() throws IOException {
-		processCWD("..");
-	}
+		Path path;
+		if (this.repertoire.getParent() != null) {
+			path = Paths.get(this.repertoire.getParent());
+		} else {
+			path = Paths.get(this.repertoire.getPath());
+		}
 
-	public void processEPRT(String adresse) throws IOException {
-		String[] s = adresse.split("[|]");
-		int port = Integer.parseInt(s[3]);
-		this.socketData = new Socket(this.adresse, port);
-		this.output.println(Constantes.CODE_SERVICE_OK);
-		this.output.flush();
-	}
-
-	private void processEPSV() throws IOException {
-		// ServerSocket server = new ServerSocket();
-		// this.socketData = server.accept();
-		// server.close();
-		this.output.println(Constantes.CODE_SERVICE_OK);
-		this.output.flush();
+		if (Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
+			this.repertoire = new File(path.toString());
+			this.output.println(Constantes.CODE_FILEOP_COMPLETED + " " + this.repertoire.getAbsolutePath());
+			this.output.flush();
+		} else {
+			this.output.println(Constantes.CODE_REQUEST_NO_EXECUTED + " " + Constantes.MSG_NO_SUCH_FOLDER);
+			this.output.flush();
+		}
 	}
 }
