@@ -118,10 +118,6 @@ public class FtpRequest extends Thread {
 			cmd = index != -1 ? request.substring(0, index) : request;
 			String param = index != -1 ? request.substring(index + 1) : null;
 
-			System.out.println(param != null);
-			System.out.println(cmd);
-			System.out.println(param);
-
 			// Vérification de la validité de la commande : Elle doit exister et
 			// avoir un nombre de paramêtre correcte. L'utilisateur doit aussi
 			// être authentifié si la commande le requiert
@@ -204,7 +200,6 @@ public class FtpRequest extends Thread {
 	 */
 	public boolean estValideCommande(String cmd, boolean param) {
 		if (!estValideParametre(cmd, param)) {
-			System.out.println("ouioui");
 			return false;
 		}
 		if (requiertAuthenfication(cmd)) {
@@ -235,7 +230,6 @@ public class FtpRequest extends Thread {
 		}
 		this.output.println(Constantes.CODE_PARAM_INVALIDE + " " + Constantes.MSG_PARAM_INVALIDE);
 		this.output.flush();
-		System.out.println("oui");
 		return false;
 	}
 
@@ -375,7 +369,6 @@ public class FtpRequest extends Thread {
 	 * @throws IOException
 	 */
 	public void processEPRT(String hote) throws IOException {
-		System.out.println(hote);
 		String[] s = hote.split("[|]");
 		int port = Integer.parseInt(s[3]);
 
@@ -403,7 +396,13 @@ public class FtpRequest extends Thread {
 	 * 
 	 * @throws IOException
 	 */
-	public void processLIST() throws IOException {
+	public boolean processLIST() throws IOException {
+		if (socketDonnees == null) {
+			this.output.println(Constantes.CODE_ERREUR_DONNEES + " " + Constantes.MSG_AUCUN_SOCKET_DONNEES);
+			this.output.flush();
+			return false;
+		}
+
 		String liste = "";
 		File[] fichiers = repertoire.listFiles();
 
@@ -427,6 +426,7 @@ public class FtpRequest extends Thread {
 
 		this.output.println(Constantes.CODE_226_LIST);
 		this.output.flush();
+		return true;
 	}
 
 	/**
@@ -434,8 +434,15 @@ public class FtpRequest extends Thread {
 	 * 
 	 * @param filename
 	 *            le nom du fichier envoyé au client
+	 * @return
 	 */
-	public void processRETR(String filename) {
+	public boolean processRETR(String filename) {
+		if (socketDonnees == null) {
+			this.output.println(Constantes.CODE_ERREUR_DONNEES + " " + Constantes.MSG_AUCUN_SOCKET_DONNEES);
+			this.output.flush();
+			return false;
+		}
+
 		try {
 			this.output.println(Constantes.CODE_LIST);
 			this.output.flush();
@@ -459,6 +466,7 @@ public class FtpRequest extends Thread {
 
 		this.output.println(Constantes.CODE_TRANSFERT_REUSSI + " " + Constantes.MSG_TRANSFERT_REUSSI);
 		this.output.flush();
+		return true;
 	}
 
 	/**
@@ -466,8 +474,15 @@ public class FtpRequest extends Thread {
 	 * 
 	 * @param filename
 	 *            le nom du fichier copié depuis le cient
+	 * @return
 	 */
-	public void processSTOR(String filename) {
+	public boolean processSTOR(String filename) {
+		if (socketDonnees == null) {
+			this.output.println(Constantes.CODE_ERREUR_DONNEES + " " + Constantes.MSG_AUCUN_SOCKET_DONNEES);
+			this.output.flush();
+			return false;
+		}
+
 		try {
 			this.output.println(Constantes.CODE_LIST);
 			this.output.flush();
@@ -491,6 +506,7 @@ public class FtpRequest extends Thread {
 
 		this.output.println(Constantes.CODE_TRANSFERT_REUSSI + " " + Constantes.MSG_TRANSFERT_REUSSI);
 		this.output.flush();
+		return true;
 	}
 
 	/**

@@ -37,6 +37,7 @@ public class Constantes {
 	public static final int CODE_LIST = 150;
 	public static final int CODE_226_LIST = 226;
 	public static final int CODE_FILEOP_COMPLETED = 250;
+	public static final int CODE_ERREUR_DONNEES = 425;
 
 	// Messages
 
@@ -53,4 +54,5 @@ public class Constantes {
 	public static final String MSG_TRANSFERT_ECHOUE = "Transfert echoue";
 	public static final String MSG_SYST = "Serveur FTP Java";
 	public static final String MSG_NO_SUCH_FOLDER = "Repertoire inexistant";
+	public static final String MSG_AUCUN_SOCKET_DONNEES = "Aucune connexion pour les donnees. Utilisez PORT, PASV, EPRT ou EPSV afin de vous connecter";
 }
