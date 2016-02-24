@@ -20,21 +20,11 @@ import java.util.Arrays;
 
 public class FtpRequest extends Thread {
 
-	/**
-	 * Liste des commandes. Si une commande n'est pas dans la liste, elle ne
-	 * sera pas reconnue par le serveur
-	 */
-	private static String commandes[] = { Constantes.CMD_USER, Constantes.CMD_PASS, Constantes.CMD_QUIT,
-			Constantes.CMD_LIST, Constantes.CMD_RETR, Constantes.CMD_STOR, Constantes.CMD_SYST, Constantes.CMD_EPRT,
-			Constantes.CMD_EPSV, Constantes.CMD_PORT, Constantes.CMD_PWD, Constantes.CMD_CWD, Constantes.CMD_CDUP,
-			Constantes.CMD_PASV };
+	private static String cmd_sans_param[] = { Constantes.CMD_QUIT, Constantes.CMD_LIST, Constantes.CMD_SYST,
+			Constantes.CMD_EPSV, Constantes.CMD_PWD, Constantes.CMD_CDUP, Constantes.CMD_PASV };
 
-	/**
-	 * liste des nombres de parametre de chaque commande. IL est important que
-	 * le nombre de parametre d'une commande soit au même indice que la commande
-	 * dans la liste de commande
-	 */
-	private static int params[] = { 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0 };
+	private static String cmd_avec_param[] = { Constantes.CMD_USER, Constantes.CMD_PASS, Constantes.CMD_RETR,
+			Constantes.CMD_STOR, Constantes.CMD_EPRT, Constantes.CMD_PORT, Constantes.CMD_CWD, };
 
 	/**
 	 * Le socket de communication
@@ -116,32 +106,34 @@ public class FtpRequest extends Thread {
 	 * @throws IOException
 	 */
 	public void processRequest() throws IOException {
-		String request;
-		String[] cmd = null;
+		String cmd = null;
 
 		do {
 			// Reception d'une requête sur l'entrée du socket
-			request = this.input.readLine();
+			String request = this.input.readLine();
 
 			System.out.println("Request: " + request);
 
-			// Découpage de la requête en commande et arguments
-			// La commande sera stockée en cmd[0] et les paramêtres en cmd[i>0]
-			cmd = request.split(" ");
+			int index = request.indexOf(" ");
+			cmd = index != -1 ? request.substring(0, index) : request;
+			String param = index != -1 ? request.substring(index + 1) : null;
+
+			System.out.println(param != null);
+			System.out.println(cmd);
+			System.out.println(param);
 
 			// Vérification de la validité de la commande : Elle doit exister et
 			// avoir un nombre de paramêtre correcte. L'utilisateur doit aussi
 			// être authentifié si la commande le requiert
-			if (estValideCommande(cmd[0], cmd.length - 1)) {
+			if (estValideCommande(cmd, param != null)) {
 				// Switch appelant la méthode correspondant à la commande
-				// stockée dans cmd[0]
-				switch (cmd[0]) {
+				switch (cmd) {
 				case Constantes.CMD_USER:
-					processUSER(cmd[1]);
+					processUSER(param);
 					break;
 
 				case Constantes.CMD_PASS:
-					processPASS(cmd[1]);
+					processPASS(param);
 					break;
 
 				case Constantes.CMD_QUIT:
@@ -153,7 +145,7 @@ public class FtpRequest extends Thread {
 					break;
 
 				case Constantes.CMD_PORT:
-					processPORT(cmd[1]);
+					processPORT(param);
 					break;
 
 				case Constantes.CMD_PASV:
@@ -161,7 +153,7 @@ public class FtpRequest extends Thread {
 					break;
 
 				case Constantes.CMD_EPRT:
-					processEPRT(cmd[1]);
+					processEPRT(param);
 					break;
 
 				case Constantes.CMD_EPSV:
@@ -173,11 +165,11 @@ public class FtpRequest extends Thread {
 					break;
 
 				case Constantes.CMD_RETR:
-					processRETR(cmd[1]);
+					processRETR(param);
 					break;
 
 				case Constantes.CMD_STOR:
-					processSTOR(cmd[1]);
+					processSTOR(param);
 					break;
 
 				case Constantes.CMD_PWD:
@@ -185,16 +177,18 @@ public class FtpRequest extends Thread {
 					break;
 
 				case Constantes.CMD_CWD:
-					processCWD(cmd[1]);
+					processCWD(param);
 					break;
 
 				case Constantes.CMD_CDUP:
 					processCDUP();
 					break;
 				}
+			} else {
+				cmd = null;
 			}
 
-		} while (!Constantes.CMD_QUIT.equals(cmd[0]));
+		} while (!Constantes.CMD_QUIT.equals(cmd));
 		// processRequest continue la reception de requêtes tant que la commande
 		// QUIT n'est pas appelée
 	}
@@ -204,18 +198,15 @@ public class FtpRequest extends Thread {
 	 * 
 	 * @param cmd
 	 *            la commande à vérifier
-	 * @param nbParams
-	 *            le nombre de parmamêtres passés à la commande
+	 * @param param
+	 *            true si la commande est parametrée, false sinon
 	 * @return true si la commande est valide, false sinon
 	 */
-	public boolean estValideCommande(String cmd, int nbParams) {
-		if (!Arrays.asList(FtpRequest.commandes).contains(cmd)) {
-			this.output.println(Constantes.CODE_CMD_INVALIDE + " " + Constantes.MSG_CMD_INVALIDE);
-			this.output.flush();
+	public boolean estValideCommande(String cmd, boolean param) {
+		if (!estValideParametre(cmd, param)) {
+			System.out.println("ouioui");
 			return false;
 		}
-		if (!estValideParametre(cmd, nbParams))
-			return false;
 		if (requiertAuthenfication(cmd)) {
 			if (!this.estAuthentifie()) {
 				this.output.println(Constantes.CODE_NON_AUTH + " " + Constantes.MSG_NON_AUTH);
@@ -231,16 +222,20 @@ public class FtpRequest extends Thread {
 	 * 
 	 * @param cmd
 	 *            la commande à vérifier
-	 * @param nbParams
-	 *            le nombre de paramètres
+	 * @param param
+	 *            true si la commande est parametrée, false sinon
 	 * @return true si le nombre de paramètre est valide, false sinon
 	 */
-	public boolean estValideParametre(String cmd, int nbParams) {
-		int index = Arrays.asList(FtpRequest.commandes).indexOf(cmd);
-		if (FtpRequest.params[index] == nbParams)
+	public boolean estValideParametre(String cmd, boolean param) {
+		if (param && Arrays.asList(FtpRequest.cmd_avec_param).contains(cmd)) {
 			return true;
+
+		} else if (!param && Arrays.asList(FtpRequest.cmd_sans_param).contains(cmd)) {
+			return true;
+		}
 		this.output.println(Constantes.CODE_PARAM_INVALIDE + " " + Constantes.MSG_PARAM_INVALIDE);
 		this.output.flush();
+		System.out.println("oui");
 		return false;
 	}
 
