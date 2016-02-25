@@ -245,31 +245,6 @@ public class FTPRequestTest {
 		assertEquals(Constantes.CODE_SYST, this.ftp.processSYST());
 	}
 
-	// ******************* Test methode processPort *******************
-	/**
-	 * Test port
-	 * 
-	 * @throws IOException
-	 */
-	@Test
-	public void testProcessPort() throws IOException {
-	//	assertEquals(Constantes.CODE_SERVICE_OK, this.ftp.processPORT("127,0,0,1"));
-		assertTrue(true);
-	}
-
-	// ******************* Test methode processList *******************
-
-	/**
-	 * Echoue
-	 */
-	@Test
-	public void testProcessList() {
-		assertTrue(true);
-	}
-	// ******************* Test methode processRetr *******************
-
-	// ******************* Test methode processStor *******************
-
 	// ******************* Test methode processPwd *******************
 	/**
 	 * Test pwd
@@ -284,15 +259,24 @@ public class FTPRequestTest {
 	// ******************* Test methode processCwd *******************
 
 	/**
-	 * Test cwd
+	 * Test cwd chemin inexistant
 	 * 
 	 * @throws IOException
 	 */
 	@Test
-	public void testProcessCwd() throws IOException {
-		assertTrue(true);
+	public void testProcessCwdCheminInexistant() throws IOException{
+		assertEquals(Constantes.CODE_REQUEST_NO_EXECUTED, ftp.processCWD("/cheminInexistant"));
 	}
 
 	// ******************* Test methode processCdup *******************
 
+	/**
+	 * Test cdup chemin existant
+	 * 
+	 * @throws IOException
+	 */
+	@Test
+	public void testProcessCdupCheminExistant() throws IOException{
+		assertEquals(Constantes.CODE_FILEOP_COMPLETED, ftp.processCDUP());
+	}
 }
