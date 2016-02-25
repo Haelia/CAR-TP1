@@ -52,7 +52,9 @@ public class Constantes {
 	public static final String MSG_PARAM_INVALIDE = "Parametres invalides";
 	public static final String MSG_TRANSFERT_REUSSI = "Transfert reussi";
 	public static final String MSG_TRANSFERT_ECHOUE = "Transfert echoue";
-	public static final String MSG_SYST = "Serveur FTP Java";
+	public static final String MSG_SYST = "Java";
 	public static final String MSG_NO_SUCH_FOLDER = "Repertoire inexistant";
 	public static final String MSG_AUCUN_SOCKET_DONNEES = "Aucune connexion pour les donnees. Utilisez PORT, PASV, EPRT ou EPSV afin de vous connecter";
+	public static final String MSG_DEMARRAGE_REUSSIE = "Serveur démarré. En attente de connexions...";
+	public static final String MSG_FICHIER_INEXISTANT = "Le fichier n'existe pas";
 }

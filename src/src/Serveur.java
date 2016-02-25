@@ -34,6 +34,7 @@ public class Serveur extends ServerSocket {
 	 * Démarre le serveur qui attend alors des connexions de clients
 	 */
 	public void start() throws IOException {
+		System.out.println(Constantes.MSG_DEMARRAGE_REUSSIE);
 		while (true) {
 			Socket socket = this.accept();
 
