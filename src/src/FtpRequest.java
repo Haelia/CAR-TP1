@@ -302,15 +302,17 @@ public class FtpRequest extends Thread {
 	 *            l'identifiant de l'utilisateur
 	 * @throws IOException
 	 */
-	public void processUSER(String user) throws IOException {
+	public int processUSER(String user) throws IOException {
 		this.authentifie = false;
 		if (Serveur.utilisateurs.containsKey(user)) {
 			this.identifiant = user;
 			String msg = Constantes.CODE_ATTENTE_MDP + " " + Constantes.MSG_ATTENTE_MDP;
 			this.sendMessage(msg);
+			return Constantes.CODE_ATTENTE_MDP;
 		} else {
 			String msg = Constantes.CODE_AUTH_ECHOUE + " " + Constantes.MSG_AUTH_ECHOUE;
 			this.sendMessage(msg);
+			return Constantes.CODE_AUTH_ECHOUE;
 		}
 
 	}
@@ -345,10 +347,11 @@ public class FtpRequest extends Thread {
 	 * 
 	 * @throws IOException
 	 */
-	public void processQUIT() throws IOException {
+	public int processQUIT() throws IOException {
 		String msg = Constantes.CODE_DECONNEXION + " " + Constantes.MSG_DECONNEXION;
 		this.sendMessage(msg);
 		this.socket.close();
+		return Constantes.CODE_DECONNEXION;
 	}
 
 	/**
@@ -356,9 +359,10 @@ public class FtpRequest extends Thread {
 	 * 
 	 * @throws IOException
 	 */
-	public void processSYST() throws IOException {
+	public int processSYST() throws IOException {
 		String msg = Constantes.CODE_SYST + " " + Constantes.MSG_SYST;
 		this.sendMessage(msg);
+		return Constantes.CODE_SYST;
 	}
 
 	/**
@@ -368,13 +372,14 @@ public class FtpRequest extends Thread {
 	 *            représente l'adresse et le port
 	 * @throws IOException
 	 */
-	private void processPORT(String hote) throws IOException {
+	public int processPORT(String hote) throws IOException {
 		String[] s = hote.split(",");
 		int port = Integer.parseInt(s[4]) * 256 + Integer.parseInt(s[5]);
 
 		this.socketDonnees = new Socket(this.adresse, port);
 		String msg = String.valueOf(Constantes.CODE_SERVICE_OK);
 		this.sendMessage(msg);
+		return Constantes.CODE_SERVICE_OK;
 	}
 
 	/**
@@ -382,7 +387,7 @@ public class FtpRequest extends Thread {
 	 * 
 	 * @throws IOException
 	 */
-	private void processPASV() throws IOException {
+	public void processPASV() throws IOException {
 		serveur = new ServerSocket(0);
 		byte[] host = this.adresse.getAddress();
 		String adresse = "";
@@ -416,7 +421,7 @@ public class FtpRequest extends Thread {
 	 * 
 	 * @throws IOException
 	 */
-	private void processEPSV() throws IOException {
+	public void processEPSV() throws IOException {
 		serveur = new ServerSocket(0);
 		int port = serveur.getLocalPort();
 
@@ -432,7 +437,7 @@ public class FtpRequest extends Thread {
 	 * @throws IOException
 	 */
 	public boolean processLIST() throws IOException {
-		if (socketDonnees == null) {
+		if (this.socketDonnees == null) {
 			String msg = Constantes.CODE_ERREUR_DONNEES + " " + Constantes.MSG_AUCUN_SOCKET_DONNEES;
 			this.sendMessage(msg);
 			return false;
@@ -547,9 +552,10 @@ public class FtpRequest extends Thread {
 	/**
 	 * Méthode éxécutant la commande PWD
 	 */
-	public void processPWD() {
+	public int processPWD() {
 		String msg = Constantes.CODE_257_PWD + " " + this.repertoire.getAbsolutePath();
 		this.sendMessage(msg);
+		return Constantes.CODE_257_PWD;
 	}
 
 	/**
@@ -559,16 +565,18 @@ public class FtpRequest extends Thread {
 	 *            le chemin du dossier vers lequel on souhaite naviguer
 	 * @throws IOException
 	 */
-	public void processCWD(String chemin) throws IOException {
+	public int processCWD(String chemin) throws IOException {
 		Path path = Paths.get(this.repertoire.getPath() + "/" + chemin);
 
 		if (Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
 			this.repertoire = new File(path.toString());
 			String msg = Constantes.CODE_FILEOP_COMPLETED + " " + this.repertoire.getAbsolutePath();
 			this.sendMessage(msg);
+			return Constantes.CODE_FILEOP_COMPLETED;
 		} else {
 			String msg = Constantes.CODE_REQUEST_NO_EXECUTED + " " + Constantes.MSG_NO_SUCH_FOLDER;
 			this.sendMessage(msg);
+			return Constantes.CODE_REQUEST_NO_EXECUTED;
 		}
 	}
 
@@ -577,7 +585,7 @@ public class FtpRequest extends Thread {
 	 * 
 	 * @throws IOException
 	 */
-	public void processCDUP() throws IOException {
+	public int processCDUP() throws IOException {
 		Path path;
 		if (this.repertoire.getParent() != null) {
 			path = Paths.get(this.repertoire.getParent());
@@ -589,9 +597,11 @@ public class FtpRequest extends Thread {
 			this.repertoire = new File(path.toString());
 			String msg = Constantes.CODE_FILEOP_COMPLETED + " " + this.repertoire.getAbsolutePath();
 			this.sendMessage(msg);
+			return Constantes.CODE_FILEOP_COMPLETED;
 		} else {
 			String msg = Constantes.CODE_REQUEST_NO_EXECUTED + " " + Constantes.MSG_NO_SUCH_FOLDER;
 			this.sendMessage(msg);
+			return Constantes.CODE_REQUEST_NO_EXECUTED;
 		}
 	}
 }
